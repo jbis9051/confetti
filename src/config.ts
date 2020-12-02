@@ -5,4 +5,3 @@ import { Config } from './interfaces/Config';
 export default yaml.safeLoad(
     fse.readFileSync('/etc/confetti-conf.yml').toString()
 ) as Config;
-
