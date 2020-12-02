@@ -1,5 +1,6 @@
 import { exec, ExecOptions } from 'child_process';
 import { BaseEncodingOptions } from 'fs';
+import { debug } from '../logger/logger';
 
 type SingleRunOptions = (BaseEncodingOptions & ExecOptions) | undefined | null;
 
@@ -21,6 +22,7 @@ export default class ExecRunner {
         options?: SingleRunOptions
     ): Promise<string | Buffer | undefined> {
         return new Promise((resolve, reject) => {
+            debug(`Running: ${command}`);
             exec(command, options, (error, stdout, stderr) => {
                 if (error) {
                     reject(error);

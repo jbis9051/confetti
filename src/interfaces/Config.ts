@@ -1,20 +1,27 @@
-export interface RepositoryEntryOptions {
-    directory: string;
-    safeFiles?: string[];
-    username: string;
-    token: string;
-    branch?: string;
+import { HookRecord } from './Hooks';
+
+interface SharedOptions {
     secret?: string;
-    runnerEnvironment?: string;
     env?: {
         [key: string]: string;
     };
+    branch?: string;
+    runnerEnvironment?: string;
+    hooks?: {
+        [key: string]: HookRecord;
+    } & HookRecord;
 }
 
-export interface Config {
-    port: number;
+export type RepositoryEntryOptions = {
+    directory?: string;
+    safeFiles?: string[];
+} & SharedOptions;
+
+export type Config = {
+    port?: number;
     secret?: string;
+    path?: string;
     repositories: {
-        [key: string]: RepositoryEntryOptions;
+        [url: string]: RepositoryEntryOptions;
     };
-}
+} & SharedOptions;

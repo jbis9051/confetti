@@ -89,9 +89,9 @@ Now celebrate your deployment with some confetti!
 
 Many options can be defined globally, locally, and/or in the confetti file (inside the repository).
 
-1. Local
-2. Repository
-3. Global
+1. Repository Options (`confetti-conf.yml.repository`)
+2. Confetti File (`.confetti.yml`)
+3. Global (`confetti-conf.yml`)
 
 # Confetti Configuration File Options (`/etc/confetti-conf.yml`)
 
@@ -125,7 +125,9 @@ See lifecycle steps for possible values of [hook]. Listed command are ran.
 
 ### `env`: Object
 
-Environment variables to be passed to run steps.
+Environment variables to be passed to run steps. 
+
+**Note: If `env` is specified in Global and Repository options, it will be combined. If there is a key conflict, repository will take precedence.**  
 
 ### `branch`: String
 

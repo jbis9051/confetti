@@ -1,34 +1,27 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
-import crypto from 'crypto';
 import config from '../config';
 import deploy from '../deploy/deploy';
+import isValidPayload from './isValidPayload';
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-function isValidPayload(payload: string, secret: string, signature: string) {
-    // based off of https://gist.github.com/stigok/57d075c1cf2a609cb758898c0b202428
-    const hmac = crypto.createHmac('sha256', secret);
-    const digest = Buffer.from(
-        `sha256=${hmac.update(payload).digest('hex')}`,
-        'utf8'
-    );
-    const checksum = Buffer.from(signature);
-    return (
-        checksum.length === digest.length &&
-        crypto.timingSafeEqual(digest, checksum)
-    );
-}
-
-app.get('/payload', (req, res, next) => {
-    const payloadString = JSON.stringify(req.body);
-    if (!payloadString) {
+app.get(config.path || '/', (req, res, next) => {
+    if (!req.body) {
         next('Payload empty');
         return;
     }
+    const repositoryURL = req.body.repository.url;
+    if(!req.body.repository?.url){
+        next('Invalid Payload');
+        return;
+    }
+    const repo = config.repositories[repositoryURL];
+    const secret = repo.secret || config.secret;
+
     const signature = req.header('x-hub-signature-256');
     if (!signature) {
         next('Signature Missing');
@@ -44,8 +37,6 @@ app.get('/payload', (req, res, next) => {
         return;
     }
     try {
-        const repositoryURL = req.body.repository.url;
-        const repo = config.repositories[repositoryURL];
         const secret = repo.secret || config.secret;
         if (!secret) {
             next(
@@ -53,7 +44,7 @@ app.get('/payload', (req, res, next) => {
             );
             return;
         }
-        if (!isValidPayload(payloadString, secret, signature)) {
+        if (!isValidPayload(req.body, secret, signature)) {
             next('Signature did not match');
             return;
         }

@@ -6,6 +6,10 @@ import yaml from 'js-yaml';
 import { RepositoryEntryOptions } from '../interfaces/Config';
 import ExecRunner from './ExecRunner';
 import { ConfettiFile } from '../interfaces/ConfettiFile';
+import { debug } from '../logger/logger';
+import { HooksUnion } from '../interfaces/Hooks';
+import { CONFETTI_FILENAME } from '../constants';
+import runHook from './runHook';
 
 export default async function deploy(
     url: string,
@@ -21,41 +25,17 @@ export default async function deploy(
                 options.branch || 'master'
             } '${url}' '${tmpDir}'`
         );
-        const confettiFilePath = path.join(tmpDir, 'confetti.yml');
-        let confettiFile: ConfettiFile | undefined;
-        if (fse.existsSync(confettiFilePath)) {
-            confettiFile = yaml.safeLoad(
-                fse.readFileSync(confettiFilePath).toString()
-            ) as ConfettiFile;
-        }
+        const confettiFilePath = path.join(tmpDir, CONFETTI_FILENAME);
+        const confettiFile: ConfettiFile | false =
+            (await fse.pathExists(confettiFilePath)) &&
+            (yaml.safeLoad(
+                await fse.readFile(confettiFilePath).toString()
+            ) as ConfettiFile);
 
-        const runHook = async (type: 'pre' | 'build') => {
-            if (!confettiFile) {
-                return;
-            }
-            let commands;
-            if (options.runnerEnvironment) {
-                commands =
-                    confettiFile[options.runnerEnvironment] &&
-                    confettiFile[options.runnerEnvironment][type];
-            } else {
-                commands = confettiFile[type];
-            }
-            if (!commands) {
-                return;
-            }
-            const execOptions = {
-                cwd: options.directory,
-                env: options.env,
-            };
-            const execRunner = new ExecRunner();
-            commands.forEach((command) => execRunner.run(command, execOptions));
-            await execRunner.execute();
-        };
+        await runHook('prepare', options, confettiFile);
 
-        await runHook('pre');
-
-        await new Promise((resolve, reject) => {
+        /* await new Promise((resolve, reject) => {
+            // TODO redo this crap
             const walker = walk.walk(options.directory);
             walker.on('file', (root, stats, next) => {
                 const removePath = path.join(root, stats.name);
@@ -73,14 +53,18 @@ export default async function deploy(
                 }
                 fse.remove(removePath).then(next);
             });
-            // @ts-ignore
+            // @ts-ign ore
             walker.on('error', reject);
             // @ts-ignore
             walker.on('end', resolve);
-        });
-        fse.ensureDirSync(options.directory);
-        await ExecRunner.singleRun(`mv ${tmpDir}/* '${options.directory}'`);
-        await runHook('build');
+        }); */
+        if (options.directory) {
+            fse.ensureDirSync(options.directory);
+            await ExecRunner.singleRun(`mv ${tmpDir}/* '${options.directory}'`);
+        }
+        await runHook('build', options, confettiFile);
+        await runHook('deploy', options, confettiFile);
+        await runHook('cleanup', options, confettiFile);
     } finally {
         fse.removeSync(tmpDir);
     }
