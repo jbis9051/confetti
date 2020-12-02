@@ -1,10 +1,11 @@
-import http from 'http';
-import app from '../app';
+#!/usr/bin/env node
 
-const port = parseInt(process.env.PORT || '3000', 10);
-app.set('port', port);
+import http from 'http';
+import app from './app';
+import config from '../config';
+
+app.set('port', config.port);
 const server = http.createServer(app);
 
-server.listen(port);
-server.addListener('listening', () => {
-});
+server.listen(config.port);
+server.addListener('listening', () => {});

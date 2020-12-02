@@ -1,0 +1,15 @@
+# This should be put in /etc/confetti-conf.yml
+
+port: 4385 # used for web service, default 4385
+secret: 'XXXXXX' # optional if local is set
+
+repositories:
+    https://username:token@github.com/jbis9051/confetti: # username and token optional. Token can be generated in github
+        directory: /var/www/test # deployment dir, make sure I have permission
+        branch: 'master' # default master
+        runnerEnvironment: 'production' # optional, this is the script you want to run in repo/.confetti.yml
+        safeFiles: # optional, exclude files from deletion
+            - .env
+        env: # optional, passed to scripts
+            NODE_ENV: 'production'
+        secret: 'XXXXXX' # optional if global is set, overrides global

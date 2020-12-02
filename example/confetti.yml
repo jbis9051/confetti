@@ -1,0 +1,19 @@
+# everything is optional. Including this file.
+
+pre: # used if runnerEnvironment is not set
+    - rm /somedir/
+build: # used if runnerEnvironment is not set
+    - npm install
+    - npm run build
+production: # used if runnerEnvironment matches this
+    pre: # ran prior to deployment.
+        - rm /somedir/
+    build:
+        - npm install
+        - npm run build
+development:
+    pre:
+        - rm /somedir/
+    build:
+        - npm install
+        - npm run build
