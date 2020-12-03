@@ -45,7 +45,7 @@ beforeAll(async () => {
         .setOpts({ cwd: path.join(tmpDir, 'client') })
         .run('git init')
         .run('git add .')
-        .run('git commit -m "initial"')
+        .run('git commit --author="Jest <jest@jest.jest>" -m "initial"')
         .run(`git push --quiet ../server master`)
         .execute();
 });
