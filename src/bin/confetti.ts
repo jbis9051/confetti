@@ -2,9 +2,11 @@
 
 import chalk from 'chalk';
 import * as readline from 'readline';
-import config from '../config';
 import deploy from '../deploy/deploy';
-import { error, info, success } from '../logger/logger';
+import { error, info, success, unmute } from '../logger/logger';
+import getConfig from '../config';
+
+unmute();
 
 const args = process.argv.splice(2);
 
@@ -19,12 +21,12 @@ function askQuestion(query: string) {
         rl.question(query, (ans) => {
             rl.close();
             resolve(ans);
-        }),
+        })
     );
 }
 
 async function argDeploy() {
-    const deploymentListing = Object.entries(config.repositories)
+    const deploymentListing = Object.entries(getConfig().repositories)
         .map(([key, value]) => {
             return `${key} --> ${value.directory}`;
         })
@@ -34,15 +36,15 @@ async function argDeploy() {
 `);
     const answer = await askQuestion(
         chalk.yellow(
-            'Are you sure you want to deploy all these repositories? y/n: ',
-        ),
+            'Are you sure you want to deploy all these repositories? y/n: '
+        )
     );
     if (answer !== 'y' && answer !== 'yes') {
         return;
     }
     let succeeded = 0;
     await Promise.all(
-        Object.entries(config.repositories).map(([key, value]) => {
+        Object.entries(getConfig().repositories).map(([key, value]) => {
             info(`Deploying '${key}'`);
             return deploy(key, value)
                 .then(() => {
@@ -50,14 +52,20 @@ async function argDeploy() {
                     success(`🎉 Deploying '${key}' succeeded! 🎉`);
                 })
                 .catch((err) => {
-                    error(`Deploying '${key}' failed with error: ${err.toString()}`);
+                    error(
+                        `Deploying '${key}' failed with error: ${err.toString()}`
+                    );
                 });
-        }),
+        })
     );
-    if (succeeded === Object.keys(config.repositories).length) {
+    if (succeeded === Object.keys(getConfig().repositories).length) {
         success(`🎉 All deployments were successful. Whoopie! 🎉`);
     } else {
-        error(`Uh Oh. ${succeeded}/${Object.keys(config.repositories).length} succeeded`);
+        error(
+            `Uh Oh. ${succeeded}/${
+                Object.keys(getConfig().repositories).length
+            } succeeded`
+        );
     }
 }
 

@@ -17,6 +17,8 @@ type RunnerArg =
 export default class ExecRunner {
     private bag: [RunnerArg, SingleRunOptions][] = [];
 
+    private opts: SingleRunOptions;
+
     static singleRun(
         command: string,
         options?: SingleRunOptions
@@ -43,6 +45,12 @@ export default class ExecRunner {
         return runner;
     }
 
+    static setOpts(options: SingleRunOptions) {
+        const runner = new ExecRunner();
+        runner.setOpts(options);
+        return runner;
+    }
+
     run(
         command: RunnerArg,
         options?: (BaseEncodingOptions & ExecOptions) | null
@@ -51,8 +59,18 @@ export default class ExecRunner {
         return this;
     }
 
+    setOpts(opts: SingleRunOptions) {
+        this.bag.push([
+            () => {
+                this.opts = { ...this.opts, ...opts };
+            },
+            undefined,
+        ]);
+        return this;
+    }
+
     async execute() {
-        const buffer = this.bag.slice();
+        const buffer = this.bag.slice().reverse();
         let previousResult: undefined | string | Buffer;
         while (buffer.length > 0) {
             const run = buffer.pop()!;
@@ -60,13 +78,16 @@ export default class ExecRunner {
                 // eslint-disable-next-line no-await-in-loop
                 const returnValue = await run[0](previousResult);
                 if (returnValue) {
-                    buffer.unshift(returnValue);
+                    buffer.push(returnValue);
                 }
                 previousResult = undefined;
             }
             if (typeof run[0] === 'string') {
                 // eslint-disable-next-line no-await-in-loop
-                previousResult = await ExecRunner.singleRun(run[0], run[1]);
+                previousResult = await ExecRunner.singleRun(run[0], {
+                    ...this.opts,
+                    ...run[1],
+                });
             }
         }
         return previousResult;

@@ -3,7 +3,7 @@ import { debug } from '../logger/logger';
 import ExecRunner from './ExecRunner';
 import { ConfettiFile } from '../interfaces/ConfettiFile';
 import { RepositoryEntryOptions } from '../interfaces/Config';
-import config from '../config';
+import getConfig from '../config';
 
 export default async function runHook(
     hook: HooksUnion,
@@ -14,7 +14,8 @@ export default async function runHook(
 
     function getCommands() {
         const environment =
-            repositoryOptions.runnerEnvironment || config.runnerEnvironment; // we don't allow an runnerEnvironment in the confetti file because that wouldn't make sense. repo options take precedent over global
+            repositoryOptions.runnerEnvironment ||
+            getConfig().runnerEnvironment; // we don't allow an runnerEnvironment in the confetti file because that wouldn't make sense. repo options take precedent over global
         // order of precedence repositoryOptions --> confettiFile --> config
         if (environment) {
             if (
@@ -30,14 +31,14 @@ export default async function runHook(
             ) {
                 return confettiFile.hooks[environment][hook];
             }
-            if (config.hooks && config.hooks[environment]) {
-                return config.hooks[environment][hook];
+            if (getConfig().hooks && getConfig().hooks![environment]) {
+                return getConfig().hooks![environment][hook];
             }
         }
         return (
             (repositoryOptions.hooks && repositoryOptions.hooks[hook]) ||
             (confettiFile && confettiFile.hooks && confettiFile.hooks[hook]) ||
-            (config && config.hooks && config.hooks[hook])
+            (getConfig() && getConfig().hooks && getConfig().hooks![hook])
         );
     }
 
@@ -48,7 +49,7 @@ export default async function runHook(
     }
     const execOptions = {
         cwd: repositoryOptions.directory,
-        env: { ...config.env, ...repositoryOptions.env }, // shallow combine thought this would make sense
+        env: { ...getConfig().env, ...repositoryOptions.env }, // shallow combine thought this would make sense
     };
     const execRunner = new ExecRunner();
     commands.forEach((command) => execRunner.run(command, execOptions));

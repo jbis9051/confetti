@@ -2,10 +2,10 @@
 
 import http from 'http';
 import app from './app';
-import config from '../config';
+import getConfig from '../config';
 
-app.set('port', config.port);
+app.set('port', getConfig().port);
 const server = http.createServer(app);
 
-server.listen(config.port);
+server.listen(getConfig().port);
 server.addListener('listening', () => {});

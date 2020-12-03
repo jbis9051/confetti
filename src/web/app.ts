@@ -1,6 +1,6 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
-import config from '../config';
+import getConfig from '../config';
 import deploy from '../deploy/deploy';
 import isValidPayload from './isValidPayload';
 
@@ -9,18 +9,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.get(config.path || '/', (req, res, next) => {
+app.get(getConfig().path || '/', (req, res, next) => {
     if (!req.body) {
         next('Payload empty');
         return;
     }
     const repositoryURL = req.body.repository.url;
-    if(!req.body.repository?.url){
+    if (!req.body.repository?.url) {
         next('Invalid Payload');
         return;
     }
-    const repo = config.repositories[repositoryURL];
-    const secret = repo.secret || config.secret;
+    const repo = getConfig().repositories[repositoryURL];
+    const secret = repo.secret || getConfig().secret;
 
     const signature = req.header('x-hub-signature-256');
     if (!signature) {
@@ -37,7 +37,6 @@ app.get(config.path || '/', (req, res, next) => {
         return;
     }
     try {
-        const secret = repo.secret || config.secret;
         if (!secret) {
             next(
                 'Could not find secret for specified repository. Please check your configuration'

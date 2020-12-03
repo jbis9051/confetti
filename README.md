@@ -125,9 +125,9 @@ See lifecycle steps for possible values of [hook]. Listed command are ran.
 
 ### `env`: Object
 
-Environment variables to be passed to run steps. 
+Environment variables to be passed to run steps.
 
-**Note: If `env` is specified in Global and Repository options, it will be combined. If there is a key conflict, repository will take precedence.**  
+**Note: If `env` is specified in Global and Repository options, it will be combined. If there is a key conflict, repository will take precedence.**
 
 ### `branch`: String
 
