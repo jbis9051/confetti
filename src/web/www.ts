@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
 import http from 'http';
-import app from './app';
+import getApp from './app';
 import getConfig from '../config';
 
-app.set('port', getConfig().port);
+const app = getApp();
+app.set('port', getConfig().port || 4385);
 const server = http.createServer(app);
 
 server.listen(getConfig().port);

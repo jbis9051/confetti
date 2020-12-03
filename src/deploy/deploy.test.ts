@@ -4,7 +4,7 @@ import os from 'os';
 import { HooksArray } from '../interfaces/Hooks';
 import getConfig from '../config';
 import deploy from './deploy';
-import setUpTests from '../test/setUpTest';
+import setUpTest from '../test/setUpTest';
 
 test('standard deployment', async () => {
     const tmpDir = fse.mkdtempSync(`${os.tmpdir()}${sep}`);
@@ -24,7 +24,7 @@ repositories:
         safeFiles:
 ${HooksArray.map((hook) => `            - ${hook}`).join('\n')}
 `;
-    await setUpTests(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
+    await setUpTest(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
 
     const url = path.join(tmpDir, 'server');
     await deploy(url, getConfig().repositories[url]);
@@ -57,7 +57,7 @@ repositories:
         runnerEnvironment: production
         directory: ${path.join(tmpDir, 'deployment')}
 `;
-    await setUpTests(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
+    await setUpTest(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
     const url = path.join(tmpDir, 'server');
     await deploy(url, getConfig().repositories[url]);
     expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testp'))).toBe(true);
@@ -85,7 +85,8 @@ repositories:
               build:
                 - touch testp
 `;
-    await setUpTests(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
+    await setUpTest(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
+
     const url = path.join(tmpDir, 'server');
     await deploy(url, getConfig().repositories[url]);
     expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testp'))).toBe(true);
@@ -113,7 +114,8 @@ hooks:
       build:
         - touch testp
 `;
-    await setUpTests(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
+    await setUpTest(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
+
     const url = path.join(tmpDir, 'server');
     await deploy(url, getConfig().repositories[url]);
     expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testp'))).toBe(true);
