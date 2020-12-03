@@ -4,7 +4,9 @@ import chalk from 'chalk';
 import * as readline from 'readline';
 import deploy from '../deploy/deploy';
 import { error, info, success, unmute } from '../logger/logger';
-import getConfig from '../config';
+import getGlobalConfig from '../getGlobalConfig';
+
+const config = getGlobalConfig();
 
 unmute();
 
@@ -26,7 +28,7 @@ function askQuestion(query: string) {
 }
 
 async function argDeploy() {
-    const deploymentListing = Object.entries(getConfig().repositories)
+    const deploymentListing = Object.entries(config.repositories)
         .map(([key, value]) => {
             return `${key} --> ${value.directory}`;
         })
@@ -44,9 +46,9 @@ async function argDeploy() {
     }
     let succeeded = 0;
     await Promise.all(
-        Object.entries(getConfig().repositories).map(([key, value]) => {
+        Object.entries(config.repositories).map(([key, value]) => {
             info(`Deploying '${key}'`);
-            return deploy(key, value)
+            return deploy(key, value, config)
                 .then(() => {
                     succeeded += 1;
                     success(`🎉 Deploying '${key}' succeeded! 🎉`);
@@ -58,12 +60,12 @@ async function argDeploy() {
                 });
         })
     );
-    if (succeeded === Object.keys(getConfig().repositories).length) {
+    if (succeeded === Object.keys(config.repositories).length) {
         success(`🎉 All deployments were successful. Whoopie! 🎉`);
     } else {
         error(
             `Uh Oh. ${succeeded}/${
-                Object.keys(getConfig().repositories).length
+                Object.keys(config.repositories).length
             } succeeded`
         );
     }

@@ -3,10 +3,11 @@ import os from 'os';
 import path, { sep } from 'path';
 import http from 'http';
 import fetch from 'node-fetch';
+import yaml from 'js-yaml';
 import setUpTest from '../test/setUpTest';
 import getApp from './app';
-import getConfig from '../config';
 import { debug } from '../logger/logger';
+import { Config } from '../interfaces/Config';
 
 function sleep(time: number) {
     return new Promise((resolve) => setTimeout(resolve, time));
@@ -27,13 +28,14 @@ repositories:
         directory: ${path.join(tmpDir, 'deployment')}
 `;
     await setUpTest(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
-
+    const config = yaml.safeLoad(CONFETTI_CONF_FILE) as Config;
     const url = path.join(tmpDir, 'server');
-    const app = getApp();
-    app.set('port', getConfig().port || 4385);
+    const app = getApp(config);
+    const port = config.port || 4385;
+    app.set('port', port);
     const server = http.createServer(app);
 
-    server.listen(getConfig().port || 4385);
+    server.listen(port);
     server.addListener('listening', () => {});
     const resp = await fetch('http://localhost:4385/', {
         method: 'POST',

@@ -1,5 +1,9 @@
 import { HookRecord } from './Hooks';
 
+export type HookList = {
+    [key: string]: HookRecord;
+} & HookRecord;
+
 interface SharedOptions {
     secret?: string;
     env?: {
@@ -7,9 +11,7 @@ interface SharedOptions {
     };
     branch?: string;
     runnerEnvironment?: string;
-    hooks?: {
-        [key: string]: HookRecord;
-    } & HookRecord;
+    hooks?: HookList;
 }
 
 export type RepositoryEntryOptions = {

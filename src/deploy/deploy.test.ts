@@ -1,10 +1,11 @@
 import fse from 'fs-extra';
 import path, { sep } from 'path';
 import os from 'os';
+import yaml from 'js-yaml';
 import { HooksArray } from '../interfaces/Hooks';
-import getConfig from '../config';
 import deploy from './deploy';
 import setUpTest from '../test/setUpTest';
+import { Config } from '../interfaces/Config';
 
 test('standard deployment', async () => {
     const tmpDir = fse.mkdtempSync(`${os.tmpdir()}${sep}`);
@@ -25,9 +26,10 @@ repositories:
 ${HooksArray.map((hook) => `            - ${hook}`).join('\n')}
 `;
     await setUpTest(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
+    const config = yaml.safeLoad(CONFETTI_CONF_FILE) as Config;
 
     const url = path.join(tmpDir, 'server');
-    await deploy(url, getConfig().repositories[url]);
+    await deploy(url, config.repositories[url], config);
     expect(
         [
             ...HooksArray.filter((hook) => hook !== 'error'),
@@ -58,8 +60,9 @@ repositories:
         directory: ${path.join(tmpDir, 'deployment')}
 `;
     await setUpTest(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
+    const config = yaml.safeLoad(CONFETTI_CONF_FILE) as Config;
     const url = path.join(tmpDir, 'server');
-    await deploy(url, getConfig().repositories[url]);
+    await deploy(url, config.repositories[url], config);
     expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testp'))).toBe(true);
     expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testd'))).toBe(
         false
@@ -86,9 +89,9 @@ repositories:
                 - touch testp
 `;
     await setUpTest(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
-
+    const config = yaml.safeLoad(CONFETTI_CONF_FILE) as Config;
     const url = path.join(tmpDir, 'server');
-    await deploy(url, getConfig().repositories[url]);
+    await deploy(url, config.repositories[url], config);
     expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testp'))).toBe(true);
     expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testd'))).toBe(
         false
@@ -117,7 +120,8 @@ hooks:
     await setUpTest(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
 
     const url = path.join(tmpDir, 'server');
-    await deploy(url, getConfig().repositories[url]);
+    const config = yaml.safeLoad(CONFETTI_CONF_FILE) as Config;
+    await deploy(url, config.repositories[url], config);
     expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testp'))).toBe(true);
     expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testd'))).toBe(
         false

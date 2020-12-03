@@ -1,10 +1,7 @@
 import fse from 'fs-extra';
 import path from 'path';
-import yaml from 'js-yaml';
-import { setConfig } from '../config';
 import ExecRunner from '../deploy/ExecRunner';
 import { debug, unmute } from '../logger/logger';
-import { Config } from '../interfaces/Config';
 
 export default async function setUpTest(
     tmpDir: string,
@@ -14,8 +11,6 @@ export default async function setUpTest(
     unmute();
     debug('Config:', configurationFile);
     debug('Confetti:', confettiFile);
-    const config = yaml.safeLoad(configurationFile) as Config;
-    setConfig(config);
     await ExecRunner.setOpts({ cwd: tmpDir })
         .run(`mkdir server`)
         .run(`mkdir client`)

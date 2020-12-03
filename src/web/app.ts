@@ -1,16 +1,16 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
-import getConfig from '../config';
 import deploy from '../deploy/deploy';
 import isValidPayload from './isValidPayload';
+import { Config } from '../interfaces/Config';
 
-function getApp() {
+export default function createApp(config: Config) {
     const app = express();
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
     app.use(cookieParser());
 
-    app.post(getConfig().path || '/', (req, res) => {
+    app.post(config.path || '/', (req, res) => {
         if (!req.body) {
             res.status(400).end('Payload empty');
             return;
@@ -20,8 +20,8 @@ function getApp() {
             res.status(400).end('Invalid Payload');
             return;
         }
-        const repo = getConfig().repositories[repositoryURL];
-        if (!repo) {
+        const repositoryOptions = config.repositories[repositoryURL];
+        if (!repositoryOptions) {
             res.status(404).end('Repository not found');
             return;
         }
@@ -35,7 +35,7 @@ function getApp() {
             return;
         }
         try {
-            const secret = repo.secret || getConfig().secret;
+            const secret = repositoryOptions.secret || config.secret;
             if (secret) {
                 const signature = req.header('x-hub-signature-256');
                 if (!signature) {
@@ -48,7 +48,7 @@ function getApp() {
                 }
             }
             res.status(200).end('Ok');
-            deploy(repositoryURL, repo);
+            deploy(repositoryURL, repositoryOptions, config);
         } catch (e) {
             // eslint-disable-next-line no-console
             console.error(e);
@@ -57,5 +57,3 @@ function getApp() {
     });
     return app;
 }
-
-export default getApp;

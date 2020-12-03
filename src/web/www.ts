@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 
 import http from 'http';
-import getApp from './app';
-import getConfig from '../config';
+import createApp from './app';
+import getGlobalConfig from '../getGlobalConfig';
 
-const app = getApp();
-app.set('port', getConfig().port || 4385);
+const config = getGlobalConfig();
+
+const port = config.port || 4385;
+const app = createApp(config);
+app.set('port', port);
 const server = http.createServer(app);
 
-server.listen(getConfig().port);
+server.listen(port);
 server.addListener('listening', () => {});

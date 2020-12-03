@@ -2,16 +2,18 @@ import fse from 'fs-extra';
 import path, { sep } from 'path';
 import yaml from 'js-yaml';
 import crypto from 'crypto';
-import { RepositoryEntryOptions } from '../interfaces/Config';
+import { Config, RepositoryEntryOptions } from '../interfaces/Config';
 import ExecRunner from './ExecRunner';
 import { ConfettiFile } from '../interfaces/ConfettiFile';
 import { CONFETTI_FILENAME } from '../constants';
 import runHook from './runHook';
 import getTmpDir from './getTmpDir';
+import { HooksUnion } from '../interfaces/Hooks';
 
 export default async function deploy(
     url: string,
-    options: RepositoryEntryOptions
+    repositoryOptions: RepositoryEntryOptions,
+    globalConfig?: Config
 ) {
     const tmpDir = await getTmpDir();
     const tmpMvDir = await getTmpDir();
@@ -19,7 +21,7 @@ export default async function deploy(
     try {
         await ExecRunner.singleRun(
             `git clone --quiet --single-branch --branch ${
-                options.branch || 'master'
+                repositoryOptions.branch || 'master'
             } '${url}' '${tmpDir}'`
         );
         const confettiFilePath = path.join(tmpDir, CONFETTI_FILENAME);
@@ -29,16 +31,19 @@ export default async function deploy(
                 (await fse.readFile(confettiFilePath)).toString()
             ) as ConfettiFile);
 
-        await runHook('prepare', options, confettiFile);
+        const runHookClosure = (hook: HooksUnion) =>
+            runHook(hook, repositoryOptions, globalConfig, confettiFile);
+
+        await runHookClosure('prepare');
         const whitelist: [string, string][] = [];
-        if (options.directory) {
-            if (options.safeFiles) {
+        if (repositoryOptions.directory) {
+            if (repositoryOptions.safeFiles) {
                 await Promise.all(
                     // this moves all the safeFiles to a tmp dir and stores the new location in whitelist
-                    options.safeFiles.map((filePath) => {
+                    repositoryOptions.safeFiles.map((filePath) => {
                         const absolutePath = filePath.startsWith(sep)
                             ? filePath
-                            : path.join(options.directory!, filePath);
+                            : path.join(repositoryOptions.directory!, filePath);
                         return fse.pathExists(absolutePath).then((exists) => {
                             if (exists) {
                                 const newPath = path.join(
@@ -56,29 +61,29 @@ export default async function deploy(
                     })
                 );
             }
-            await fse.remove(options.directory); // now that we took care of safe files we can just remove the dir
-            await fse.ensureDir(options.directory); // but lets recreate it
+            await fse.remove(repositoryOptions.directory); // now that we took care of safe files we can just remove the dir
+            await fse.ensureDir(repositoryOptions.directory); // but lets recreate it
             await fse.readdir(tmpDir).then((files) => {
                 return Promise.all(
                     files.map((file) =>
                         fse.move(
                             path.join(tmpDir, file),
-                            path.join(options.directory!, file)
+                            path.join(repositoryOptions.directory!, file)
                         )
                     )
                 );
             });
-            if (whitelist.length > 0) {
-                await Promise.all(
-                    whitelist.map(([oldPath, currentPath]) =>
-                        fse.move(currentPath, oldPath, { overwrite: true })
-                    )
-                );
-            }
         }
-        await runHook('build', options, confettiFile);
-        await runHook('deploy', options, confettiFile);
-        await runHook('cleanup', options, confettiFile);
+        if (whitelist.length > 0) {
+            await Promise.all(
+                whitelist.map(([oldPath, currentPath]) =>
+                    fse.move(currentPath, oldPath, { overwrite: true })
+                )
+            );
+        }
+        await runHookClosure('build');
+        await runHookClosure('deploy');
+        await runHookClosure('cleanup');
     } finally {
         await Promise.all([fse.remove(tmpDir), fse.remove(tmpMvDir)]);
     }
