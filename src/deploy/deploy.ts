@@ -57,10 +57,17 @@ export default async function deploy(
                 );
             }
             await fse.remove(options.directory); // now that we took care of safe files we can just remove the dir
-            fse.ensureDirSync(options.directory); // but lets recreate it
-            await ExecRunner.singleRun(
-                `mv ${tmpDir}/{.[!.],}* '${options.directory}'`
-            );
+            await fse.ensureDir(options.directory); // but lets recreate it
+            await fse.readdir(tmpDir).then((files) => {
+                return Promise.all(
+                    files.map((file) =>
+                        fse.move(
+                            path.join(tmpDir, file),
+                            path.join(options.directory!, file)
+                        )
+                    )
+                );
+            });
             if (whitelist.length > 0) {
                 await Promise.all(
                     whitelist.map(([oldPath, currentPath]) =>
