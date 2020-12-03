@@ -1,16 +1,15 @@
 import fse from 'fs-extra';
 import path, { sep } from 'path';
 import os from 'os';
-import yaml from 'js-yaml';
 import { HooksArray } from '../interfaces/Hooks';
 import getConfig from '../config';
-import { Config } from '../interfaces/Config';
 import deploy from './deploy';
-import setUpTests from '../test/setUpTests';
+import setUpTests from '../test/setUpTest';
 
-const tmpDir = fse.mkdtempSync(`${os.tmpdir()}${sep}`);
+test('standard deployment', async () => {
+    const tmpDir = fse.mkdtempSync(`${os.tmpdir()}${sep}`);
 
-const CONFETTI_FILE = `
+    const CONFETTI_FILE = `
 hooks:
 ${HooksArray.map(
     (hook) => `  ${hook}:
@@ -18,17 +17,15 @@ ${HooksArray.map(
 ).join('\n')} 
 `;
 
-const CONFETTI_CONF_FILE = yaml.safeLoad(`
+    const CONFETTI_CONF_FILE = `
 repositories:
     ${path.join(tmpDir, 'server')}:
         directory: ${path.join(tmpDir, 'deployment')}
         safeFiles:
 ${HooksArray.map((hook) => `            - ${hook}`).join('\n')}
-`) as Config;
+`;
+    await setUpTests(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
 
-setUpTests(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
-
-test('standard deployment', async () => {
     const url = path.join(tmpDir, 'server');
     await deploy(url, getConfig().repositories[url]);
     expect(
@@ -38,4 +35,90 @@ test('standard deployment', async () => {
             'test',
         ].every((name) => fse.existsSync(path.join(tmpDir, 'deployment', name)))
     ).toBe(true);
+    await fse.removeSync(tmpDir);
+});
+
+test('environment confetti file deployment', async () => {
+    const tmpDir = fse.mkdtempSync(`${os.tmpdir()}${sep}`);
+
+    const CONFETTI_FILE = `
+hooks:
+    production:
+      build:
+       - touch testp
+    development:
+      build:
+        - touch testp
+`;
+
+    const CONFETTI_CONF_FILE = `
+repositories:
+    ${path.join(tmpDir, 'server')}:
+        runnerEnvironment: production
+        directory: ${path.join(tmpDir, 'deployment')}
+`;
+    await setUpTests(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
+    const url = path.join(tmpDir, 'server');
+    await deploy(url, getConfig().repositories[url]);
+    expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testp'))).toBe(true);
+    expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testd'))).toBe(
+        false
+    );
+    await fse.removeSync(tmpDir);
+});
+
+test('environment repository options file deployment', async () => {
+    const tmpDir = fse.mkdtempSync(`${os.tmpdir()}${sep}`);
+
+    const CONFETTI_FILE = ``;
+
+    const CONFETTI_CONF_FILE = `
+repositories:
+    ${path.join(tmpDir, 'server')}:
+        runnerEnvironment: production
+        directory: ${path.join(tmpDir, 'deployment')}
+        hooks:
+            production:
+              build:
+               - touch testp
+            development:
+              build:
+                - touch testp
+`;
+    await setUpTests(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
+    const url = path.join(tmpDir, 'server');
+    await deploy(url, getConfig().repositories[url]);
+    expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testp'))).toBe(true);
+    expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testd'))).toBe(
+        false
+    );
+    await fse.removeSync(tmpDir);
+});
+
+test('environment config file deployment', async () => {
+    const tmpDir = fse.mkdtempSync(`${os.tmpdir()}${sep}`);
+
+    const CONFETTI_FILE = ``;
+
+    const CONFETTI_CONF_FILE = `
+repositories:
+    ${path.join(tmpDir, 'server')}:
+        runnerEnvironment: production
+        directory: ${path.join(tmpDir, 'deployment')}
+hooks:
+    production:
+      build:
+       - touch testp
+    development:
+      build:
+        - touch testp
+`;
+    await setUpTests(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
+    const url = path.join(tmpDir, 'server');
+    await deploy(url, getConfig().repositories[url]);
+    expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testp'))).toBe(true);
+    expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testd'))).toBe(
+        false
+    );
+    await fse.removeSync(tmpDir);
 });
