@@ -37,18 +37,28 @@ repositories:
 
     server.listen(port);
     server.addListener('listening', () => {});
-    const resp = await fetch('http://localhost:4385/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'x-github-event': 'push',
-        },
-        body: JSON.stringify({ repository: { url } }),
-    });
-    debug(await resp.text());
-    server.close();
-    expect(resp.status).toBe(200);
-    await sleep(1500); // give time for deploy to complete
-    expect(fse.existsSync(path.join(tmpDir, 'deployment', 'test'))).toBe(true);
-    await fse.removeSync(tmpDir);
+    try {
+        const mockEvent = fse.readJsonSync(
+            path.join(__dirname, '..', 'test', 'MockGHPushEvent.json')
+        );
+        mockEvent.repository.url = url;
+        const resp = await fetch('http://localhost:4385/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-github-event': 'push',
+            },
+            body: JSON.stringify(mockEvent),
+        });
+        debug(await resp.text());
+        expect(resp.status).toBe(200);
+        await sleep(1500); // give time for deploy to complete
+        expect(fse.existsSync(path.join(tmpDir, 'deployment', 'test'))).toBe(
+            true
+        );
+    } catch (e) {
+        server.close();
+        await fse.removeSync(tmpDir);
+        throw e;
+    }
 });
