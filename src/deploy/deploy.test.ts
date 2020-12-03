@@ -44,8 +44,10 @@ beforeAll(async () => {
         )
         .setOpts({ cwd: path.join(tmpDir, 'client') })
         .run('git init')
+        .run('git config user.email "jest@jest.jest"')
+        .run('git config user.name "Jest Jest"')
         .run('git add .')
-        .run('git commit --author="Jest <jest@jest.jest>" -m "initial"')
+        .run('git commit -m "initial"')
         .run(`git push --quiet ../server master`)
         .execute();
 });
