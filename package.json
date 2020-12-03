@@ -10,8 +10,7 @@
         "lint:fix": "npm run link --fix",
         "prettier": "prettier --check .",
         "prettier:fix": "prettier --write --check .",
-        "test": "npm run lint && npm run prettier && npm run build",
-        "test:full": "npm run lint && npm run prettier && npm run build && npm run test:jest",
+        "test": "npm run lint && npm run prettier && npm run build && npm run test:jest",
         "test:jest": "jest"
     },
     "bin": {

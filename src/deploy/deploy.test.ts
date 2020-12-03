@@ -2,12 +2,11 @@ import fse from 'fs-extra';
 import path, { sep } from 'path';
 import os from 'os';
 import yaml from 'js-yaml';
-import ExecRunner from './ExecRunner';
 import { HooksArray } from '../interfaces/Hooks';
-import { unmute } from '../logger/logger';
-import getConfig, { setConfig } from '../config';
+import getConfig from '../config';
 import { Config } from '../interfaces/Config';
 import deploy from './deploy';
+import setUpTests from '../test/setUpTests';
 
 const tmpDir = fse.mkdtempSync(`${os.tmpdir()}${sep}`);
 
@@ -27,36 +26,9 @@ repositories:
 ${HooksArray.map((hook) => `            - ${hook}`).join('\n')}
 `) as Config;
 
-beforeAll(async () => {
-    setConfig(CONFETTI_CONF_FILE);
-    unmute();
-    await ExecRunner.setOpts({ cwd: tmpDir })
-        .run(`mkdir server`)
-        .run(`mkdir client`)
-        .run(`mkdir deployment`)
-        .run(`git init --bare server`)
-        .run(`touch client/test`)
-        .run(() =>
-            fse.writeFileSync(
-                path.join(tmpDir, 'client', '.confetti.yml'),
-                Buffer.from(CONFETTI_FILE)
-            )
-        )
-        .setOpts({ cwd: path.join(tmpDir, 'client') })
-        .run('git init')
-        .run('git config user.email "jest@jest.jest"')
-        .run('git config user.name "Jest Jest"')
-        .run('git add .')
-        .run('git commit -m "initial"')
-        .run(`git push --quiet ../server master`)
-        .execute();
-});
+setUpTests(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
 
-afterAll(() => {
-    fse.removeSync(tmpDir);
-});
-
-test('deploy', async () => {
+test('standard deployment', async () => {
     const url = path.join(tmpDir, 'server');
     await deploy(url, getConfig().repositories[url]);
     expect(
