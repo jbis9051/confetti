@@ -1,9 +1,9 @@
 {
     "compilerOptions": {
         "outDir": "build",
-        "target": "ES2020",
+        "target": "es5",
         "module": "commonjs",
-        "lib": ["ES2020"],
+        "lib": ["es5"],
         "strict": true,
         "moduleResolution": "node",
         "esModuleInterop": true,
