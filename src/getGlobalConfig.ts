@@ -4,7 +4,7 @@ import { Config } from './interfaces/Config';
 import { CONFETTI_CONFIG_PATH } from './constants';
 
 export default function getGlobalConfig() {
-    if (fse.existsSync(CONFETTI_CONFIG_PATH)) {
+    if (!fse.existsSync(CONFETTI_CONFIG_PATH)) {
         throw new Error(
             `Config not found at '${CONFETTI_CONFIG_PATH}'. Run 'sudo confetti init'`
         );
