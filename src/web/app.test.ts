@@ -58,9 +58,8 @@ repositories:
         expect(fse.existsSync(path.join(tmpDir, 'deployment', 'test'))).toBe(
             true
         );
-    } catch (e) {
+    } finally {
         server.close();
         await fse.removeSync(tmpDir);
-        throw e;
     }
 });
