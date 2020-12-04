@@ -48,7 +48,11 @@ export default async function runHook(
     }
     const execOptions = {
         cwd: repositoryOptions.directory,
-        env: { ...config?.env, ...repositoryOptions.env }, // shallow combine thought this would make sense
+        env: {
+            PATH: process.env.PATH,
+            ...config?.env,
+            ...repositoryOptions.env,
+        }, // shallow combine thought this would make sense
     };
     const execRunner = new ExecRunner();
     commands.forEach((command) => execRunner.run(command, execOptions));
