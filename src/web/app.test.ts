@@ -8,6 +8,7 @@ import setUpTest from '../test/setUpTest';
 import getApp from './app';
 import { debug } from '../logger/logger';
 import { Config } from '../interfaces/Config';
+import { DEFAULT_BRANCH, DEFAULT_PORT } from '../constants';
 
 function sleep(time: number) {
     return new Promise((resolve) => setTimeout(resolve, time));
@@ -31,7 +32,7 @@ repositories:
     const config = yaml.safeLoad(CONFETTI_CONF_FILE) as Config;
     const url = path.join(tmpDir, 'server');
     const app = getApp(config);
-    const port = config.port || 4385;
+    const port = config.port || DEFAULT_PORT;
     app.set('port', port);
     const server = http.createServer(app);
 
@@ -42,7 +43,8 @@ repositories:
             path.join(__dirname, '..', 'test', 'MockGHPushEvent.json')
         );
         mockEvent.repository.html_url = url;
-        const resp = await fetch('http://localhost:4385/', {
+        mockEvent.ref = `refs/heads/${DEFAULT_BRANCH}`;
+        const resp = await fetch(`http://localhost:${DEFAULT_PORT}/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -51,7 +53,7 @@ repositories:
             body: JSON.stringify(mockEvent),
         });
         debug(await resp.text());
-        expect(resp.status).toBe(200);
+        expect(resp.status).toBe(202);
         await sleep(1500); // give time for deploy to complete
         expect(fse.existsSync(path.join(tmpDir, 'deployment', 'test'))).toBe(
             true

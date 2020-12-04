@@ -3,6 +3,8 @@ import cookieParser from 'cookie-parser';
 import deploy from '../deploy/deploy';
 import isValidPayload from './isValidPayload';
 import { Config } from '../interfaces/Config';
+import getBranch from './getBranch';
+import { DEFAULT_BRANCH } from '../constants';
 
 export default function createApp(config: Config) {
     const app = express();
@@ -34,7 +36,27 @@ export default function createApp(config: Config) {
             res.status(400).end('Event is not push');
             return;
         }
+
         try {
+            const branch = getBranch(req.body, event);
+            if (!branch) {
+                res.status(400).end(
+                    'Branch name not found. Probably an unsupported event.'
+                );
+                return;
+            }
+            const acceptedBranch =
+                repositoryOptions.branch || config.branch || DEFAULT_BRANCH;
+            if (branch !== acceptedBranch) {
+                // 200 is probably not the best code for this but
+                // 1. We use 202 for proper requests
+                // 2. GitHub doesn't allow users to limit webhooks to branches
+                //    so we will receive requests for all branches. We only
+                //    want to run on specified branch(s) but we also don't want
+                //    to error on something the user can't prevent. So we settle
+                //    for a 200.
+                res.status(200).send("Branch doesn't match. Skipping.");
+            }
             const secret = repositoryOptions.secret || config.secret;
             if (secret) {
                 const signature = req.header('x-hub-signature-256');
@@ -47,7 +69,7 @@ export default function createApp(config: Config) {
                     return;
                 }
             }
-            res.status(200).end('Ok');
+            res.status(202).end('Accepted'); // 202 just means it'll be batched for processing
             deploy(repositoryURL, repositoryOptions, config);
         } catch (e) {
             // eslint-disable-next-line no-console

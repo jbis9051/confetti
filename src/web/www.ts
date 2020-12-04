@@ -3,10 +3,11 @@
 import http from 'http';
 import createApp from './app';
 import getGlobalConfig from '../getGlobalConfig';
+import { DEFAULT_PORT } from '../constants';
 
 const config = getGlobalConfig();
 
-const port = config.port || 4385;
+const port = config.port || DEFAULT_PORT;
 const app = createApp(config);
 app.set('port', port);
 const server = http.createServer(app);
