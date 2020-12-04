@@ -41,7 +41,7 @@ repositories:
         const mockEvent = fse.readJsonSync(
             path.join(__dirname, '..', 'test', 'MockGHPushEvent.json')
         );
-        mockEvent.repository.url = url;
+        mockEvent.repository.html_url = url;
         const resp = await fetch('http://localhost:4385/', {
             method: 'POST',
             headers: {

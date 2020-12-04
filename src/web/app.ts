@@ -15,7 +15,7 @@ export default function createApp(config: Config) {
             res.status(400).end('Payload empty');
             return;
         }
-        const repositoryURL = req.body.repository?.url;
+        const repositoryURL = req.body.repository?.html_url;
         if (!repositoryURL) {
             res.status(400).end('Invalid Payload');
             return;
