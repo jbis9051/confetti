@@ -5,6 +5,7 @@ import isValidPayload from './isValidPayload';
 import { Config } from '../interfaces/Config';
 import getBranch from './getBranch';
 import { DEFAULT_BRANCH } from '../constants';
+import { debug, error, warn } from '../logger/logger';
 
 export default function createApp(config: Config) {
     const app = express();
@@ -22,11 +23,6 @@ export default function createApp(config: Config) {
             res.status(400).end('Invalid Payload');
             return;
         }
-        const repositoryOptions = config.repositories[repositoryURL];
-        if (!repositoryOptions) {
-            res.status(404).end('Repository not found');
-            return;
-        }
         const event = req.header('x-github-event');
         if (!event) {
             res.status(400).end('No event listed');
@@ -36,7 +32,6 @@ export default function createApp(config: Config) {
             res.status(400).end('Event is not push');
             return;
         }
-
         try {
             const branch = getBranch(req.body, event);
             if (!branch) {
@@ -45,35 +40,50 @@ export default function createApp(config: Config) {
                 );
                 return;
             }
-            const acceptedBranch =
-                repositoryOptions.branch || config.branch || DEFAULT_BRANCH;
-            if (branch !== acceptedBranch) {
-                // 200 is probably not the best code for this but
-                // 1. We use 202 for proper requests
-                // 2. GitHub doesn't allow users to limit webhooks to branches
-                //    so we will receive requests for all branches. We only
-                //    want to run on specified branch(s) but we also don't want
-                //    to error on something the user can't prevent. So we settle
-                //    for a 200.
-                res.status(200).send("Branch doesn't match. Skipping.");
-            }
-            const secret = repositoryOptions.secret || config.secret;
-            if (secret) {
+            const repositories = config.repositories.filter((repo, index) => {
+                const repoOpts = repo[repositoryURL];
+                if (!repoOpts) {
+                    return false;
+                }
+                if (branch !== (repoOpts.branch || DEFAULT_BRANCH)) {
+                    debug(
+                        `Match for repository [${repositoryURL}] failed match with: Branch Invalid`
+                    );
+                    return false;
+                }
+                const secret = repoOpts.secret || config.secret;
+                if (!secret) {
+                    // if the user hasn't set a secret warn them, but continue
+                    warn(`Repository [${repositoryURL}] is missing secret`);
+                    return true;
+                }
                 const signature = req.header('x-hub-signature-256');
                 if (!signature) {
-                    res.status(400).end('Request is not signed');
-                    return;
+                    error(
+                        `Match for repository [${repositoryURL}] failed match with: Request did not have signature`
+                    );
+                    return false;
                 }
                 if (!isValidPayload(req.body, secret, signature)) {
-                    res.status(400).end('Signature did not match');
-                    return;
+                    error(
+                        `Match for repository [${repositoryURL}] failed match with: Signature did not match`
+                    );
+                    return false;
                 }
+                return true;
+            });
+            if (repositories.length === 0) {
+                res.status(404).end(
+                    `Repository with branch ${branch} not found`
+                );
+                return;
             }
             res.status(202).end('Accepted'); // 202 just means it'll be batched for processing
-            deploy(repositoryURL, repositoryOptions, config);
+            repositories.forEach((repository) => {
+                deploy(repositoryURL, repository[repositoryURL], config);
+            });
         } catch (e) {
-            // eslint-disable-next-line no-console
-            console.error(e);
+            error(e);
             res.status(500).end('Unknown error occurred');
         }
     });

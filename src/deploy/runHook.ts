@@ -2,11 +2,11 @@ import { HooksUnion } from '../interfaces/Hooks';
 import { debug } from '../logger/logger';
 import ExecRunner from './ExecRunner';
 import { ConfettiFile } from '../interfaces/ConfettiFile';
-import { Config, RepositoryEntryOptions } from '../interfaces/Config';
+import { Config, RepositoryOptions } from '../interfaces/Config';
 
 export default async function runHook(
     hook: HooksUnion,
-    repositoryOptions: RepositoryEntryOptions,
+    repositoryOptions: RepositoryOptions,
     config?: Config,
     confettiFile?: ConfettiFile | false
 ) {

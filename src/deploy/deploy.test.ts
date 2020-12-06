@@ -20,7 +20,7 @@ ${HooksArray.map(
 
     const CONFETTI_CONF_FILE = `
 repositories:
-    ${path.join(tmpDir, 'server')}:
+    - ${path.join(tmpDir, 'server')}:
         directory: ${path.join(tmpDir, 'deployment')}
         safeFiles:
 ${HooksArray.map((hook) => `            - ${hook}`).join('\n')}
@@ -29,7 +29,7 @@ ${HooksArray.map((hook) => `            - ${hook}`).join('\n')}
     const config = yaml.safeLoad(CONFETTI_CONF_FILE) as Config;
 
     const url = path.join(tmpDir, 'server');
-    await deploy(url, config.repositories[url], config);
+    await deploy(url, config.repositories[0][url], config);
     expect(
         [
             ...HooksArray.filter((hook) => hook !== 'error'),
@@ -55,14 +55,14 @@ hooks:
 
     const CONFETTI_CONF_FILE = `
 repositories:
-    ${path.join(tmpDir, 'server')}:
+    - ${path.join(tmpDir, 'server')}:
         runnerEnvironment: production
         directory: ${path.join(tmpDir, 'deployment')}
 `;
     await setUpTest(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
     const config = yaml.safeLoad(CONFETTI_CONF_FILE) as Config;
     const url = path.join(tmpDir, 'server');
-    await deploy(url, config.repositories[url], config);
+    await deploy(url, config.repositories[0][url], config);
     expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testp'))).toBe(true);
     expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testd'))).toBe(
         false
@@ -77,7 +77,7 @@ test('environment repository options file deployment', async () => {
 
     const CONFETTI_CONF_FILE = `
 repositories:
-    ${path.join(tmpDir, 'server')}:
+    - ${path.join(tmpDir, 'server')}:
         runnerEnvironment: production
         directory: ${path.join(tmpDir, 'deployment')}
         hooks:
@@ -91,7 +91,7 @@ repositories:
     await setUpTest(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
     const config = yaml.safeLoad(CONFETTI_CONF_FILE) as Config;
     const url = path.join(tmpDir, 'server');
-    await deploy(url, config.repositories[url], config);
+    await deploy(url, config.repositories[0][url], config);
     expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testp'))).toBe(true);
     expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testd'))).toBe(
         false
@@ -106,7 +106,7 @@ test('environment config file deployment', async () => {
 
     const CONFETTI_CONF_FILE = `
 repositories:
-    ${path.join(tmpDir, 'server')}:
+    - ${path.join(tmpDir, 'server')}:
         runnerEnvironment: production
         directory: ${path.join(tmpDir, 'deployment')}
 hooks:
@@ -121,7 +121,7 @@ hooks:
 
     const url = path.join(tmpDir, 'server');
     const config = yaml.safeLoad(CONFETTI_CONF_FILE) as Config;
-    await deploy(url, config.repositories[url], config);
+    await deploy(url, config.repositories[0][url], config);
     expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testp'))).toBe(true);
     expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testd'))).toBe(
         false

@@ -5,16 +5,18 @@ export type HookList = {
 } & HookRecord;
 
 interface SharedOptions {
+    hooks?: HookList;
     secret?: string;
+    branch?: string;
+    runnerEnvironment?: string;
     env?: {
         [key: string]: string;
     };
-    branch?: string;
-    runnerEnvironment?: string;
-    hooks?: HookList;
 }
 
-export type RepositoryEntryOptions = {
+export type RepositoryOptions = {
+    username?: string;
+    password?: string;
     directory?: string;
     safeFiles?: string[];
 } & SharedOptions;
@@ -24,6 +26,6 @@ export type Config = {
     secret?: string;
     path?: string;
     repositories: {
-        [url: string]: RepositoryEntryOptions;
-    };
+        [url: string]: RepositoryOptions;
+    }[];
 } & SharedOptions;

@@ -25,7 +25,7 @@ hooks:
 
     const CONFETTI_CONF_FILE = `
 repositories:
-    ${path.join(tmpDir, 'server')}:
+    - ${path.join(tmpDir, 'server')}:
         directory: ${path.join(tmpDir, 'deployment')}
 `;
     await setUpTest(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);

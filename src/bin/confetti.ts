@@ -3,12 +3,10 @@
 import chalk from 'chalk';
 import * as readline from 'readline';
 import deploy from '../deploy/deploy';
-import { error, info, success, unmute } from '../logger/logger';
+import { error, info, success } from '../logger/logger';
 import getGlobalConfig from '../getGlobalConfig';
 
 const config = getGlobalConfig();
-
-unmute();
 
 const args = process.argv.splice(2);
 
@@ -28,9 +26,10 @@ function askQuestion(query: string) {
 }
 
 async function argDeploy() {
-    const deploymentListing = Object.entries(config.repositories)
-        .map(([key, value]) => {
-            return `${key} --> ${value.directory}`;
+    const deploymentListing = config.repositories
+        .map((repoObj) => {
+            const url = Object.keys(repoObj)[0];
+            return `${url} --> ${repoObj[url].directory}`;
         })
         .join('\n');
     info(`Planning to deploy the following:

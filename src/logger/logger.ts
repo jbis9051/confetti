@@ -1,43 +1,40 @@
-import chalk from 'chalk';
+import * as fs from 'fs';
+import { LOG_PATH } from '../constants';
 
 // based on https://github.com/phenomnomnominal/betterer
-
-const SPACER = chalk.yellowBright(' - ');
 
 let muted = true;
 
 function log(...args: any[]) {
-    if (muted) {
-        return;
+    if (!muted) {
+        // eslint-disable-next-line no-console
+        console.log(...args);
     }
-    // eslint-disable-next-line no-console
-    console.log(...args);
+    const now = new Date();
+    const string = args
+        .map((arg) => arg.toString())
+        .join(' ')
+        .split('\n')
+        .map((line: string) => `${now.toUTCString()} ${line}`)
+        .join('\n');
+    fs.appendFileSync(LOG_PATH, `${string}\n`);
 }
 
 function createLogger(name: string) {
     return (...messages: string[]) => {
-        log(
-            `${name}${SPACER}`,
-            ...messages.map((m) =>
-                chalk.green(
-                    m
-                        .split('\n')
-                        .map((text, i) => {
-                            if (i === 0) {
-                                return text;
-                            }
-                            return (
-                                ' '.repeat(
-                                    // eslint-disable-next-line no-control-regex
-                                    (name + SPACER).replace(/[‌]*\[\d+m?/g, '') // remove the color stuff
-                                        .length
-                                ) + text
-                            );
-                        })
-                        .join('\n')
-                )
-            )
+        const spacedMessages = messages.map((message) =>
+            message
+                .toString()
+                .split('\n')
+                .map((text, i) => {
+                    if (i === 0) {
+                        return text;
+                    }
+                    return ' '.repeat(name.length + 5) + text; // " [] " is 4 + 1 from space from date
+                })
+                .join('\n')
         );
+        log(` [${name}] `, ...spacedMessages);
     };
 }
 
@@ -47,8 +44,8 @@ export const mute = () => {
 export const unmute = () => {
     muted = false;
 };
-export const debug = createLogger(chalk.bgBlue.white(' debg '));
-export const success = createLogger(chalk.bgGreenBright.black(' succ '));
-export const info = createLogger(chalk.bgWhiteBright.black(' info '));
-export const warn = createLogger(chalk.bgYellowBright.black(' warn '));
-export const error = createLogger(chalk.bgRedBright.white(' erro '));
+export const debug = createLogger('debg');
+export const success = createLogger('succ');
+export const info = createLogger('info');
+export const warn = createLogger('warn');
+export const error = createLogger('erro');

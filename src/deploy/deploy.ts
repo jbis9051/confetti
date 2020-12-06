@@ -2,27 +2,39 @@ import fse from 'fs-extra';
 import path, { sep } from 'path';
 import yaml from 'js-yaml';
 import crypto from 'crypto';
-import { Config, RepositoryEntryOptions } from '../interfaces/Config';
+import { URL } from 'url';
+import { Config, RepositoryOptions } from '../interfaces/Config';
 import ExecRunner from './ExecRunner';
 import { ConfettiFile } from '../interfaces/ConfettiFile';
-import { CONFETTI_FILENAME } from '../constants';
+import { CONFETTI_FILENAME, DEFAULT_BRANCH } from '../constants';
 import runHook from './runHook';
 import getTmpDir from './getTmpDir';
 import { HooksUnion } from '../interfaces/Hooks';
 
 export default async function deploy(
     url: string,
-    repositoryOptions: RepositoryEntryOptions,
+    repositoryOptions: RepositoryOptions,
     globalConfig?: Config
 ) {
     const tmpDir = await getTmpDir();
     const tmpMvDir = await getTmpDir();
     await fse.ensureDir(tmpDir);
+    let finalURL = url;
+    if (/^https?:\/\//.test(url)) {
+        const urlObj = new URL(url);
+        if (repositoryOptions.username) {
+            urlObj.username = repositoryOptions.username;
+        }
+        if (repositoryOptions.password) {
+            urlObj.password = repositoryOptions.password;
+        }
+        finalURL = urlObj.href;
+    }
     try {
         await ExecRunner.singleRun(
             `git clone --quiet --single-branch --branch ${
-                repositoryOptions.branch || 'master'
-            } '${url}' '${tmpDir}'`
+                repositoryOptions.branch || DEFAULT_BRANCH
+            } '${finalURL}' '${tmpDir}'`
         );
         const confettiFilePath = path.join(tmpDir, CONFETTI_FILENAME);
         const confettiFile: ConfettiFile | false =
