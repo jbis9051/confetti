@@ -40,7 +40,7 @@ export default function createApp(config: Config) {
                 );
                 return;
             }
-            const repositories = config.repositories.filter((repo, index) => {
+            const repositories = config.repositories.filter((repo) => {
                 const repoOpts = repo[repositoryURL];
                 if (!repoOpts) {
                     return false;

@@ -28,7 +28,7 @@ On your server, add a `/etc/confetti-conf.yml` file. Under `repositories` add th
 # /etc/confetti-conf.yml
 repositories:
     - https://github.com/username/webservice:
-        directory: /var/www/webservice
+          directory: /var/www/webservice
 ```
 
 Now lets do a manual deployment
@@ -70,7 +70,6 @@ Commit and push this file. Now confetti will run those build steps after cloning
 ### 🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉
 
 Now celebrate your deployment with some confetti!
-
 
 # Lifecycle Steps
 

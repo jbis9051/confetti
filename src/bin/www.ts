@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import http from 'http';
-import createApp from './app';
+import createApp from '../web/app';
 import getGlobalConfig from '../getGlobalConfig';
 import { DEFAULT_PORT } from '../constants';
 
