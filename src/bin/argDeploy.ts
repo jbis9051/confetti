@@ -26,21 +26,22 @@ export default async function argDeploy() {
     }
     let succeeded = 0;
     await Promise.all(
-        Object.entries(config.repositories).map(([key, value]) => {
-            info(`Deploying '${key}'`);
-            return deploy(key, value, config)
+        config.repositories.map((repoObj) => {
+            const url = Object.keys(repoObj)[0];
+            info(`Deploying '${url}'`);
+            return deploy(url, repoObj[url], config)
                 .then(() => {
                     succeeded += 1;
-                    success(`🎉 Deploying '${key}' succeeded! 🎉`);
+                    success(`🎉 Deploying '${url}' succeeded! 🎉`);
                 })
                 .catch((err) => {
                     error(
-                        `Deploying '${key}' failed with error: ${err.toString()}`
+                        `Deploying '${url}' failed with error: ${err.toString()}`
                     );
                 });
         })
     );
-    if (succeeded === Object.keys(config.repositories).length) {
+    if (succeeded === config.repositories.length) {
         success(`🎉 All deployments were successful. Whoopie! 🎉`);
     } else {
         error(
