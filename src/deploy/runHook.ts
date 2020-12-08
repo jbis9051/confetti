@@ -2,43 +2,36 @@ import { HooksUnion } from '../interfaces/Hooks';
 import { debug } from '../logger/logger';
 import ExecRunner from './ExecRunner';
 import { ConfettiFile } from '../interfaces/ConfettiFile';
-import { Config, RepositoryOptions } from '../interfaces/Config';
+import {
+    ConfettiConfiguration,
+    RepositoryOptions,
+} from '../interfaces/ConfettiConfiguration';
 
 export default async function runHook(
     hook: HooksUnion,
     repositoryOptions: RepositoryOptions,
-    config?: Config,
-    confettiFile?: ConfettiFile | false
+    cwd: string,
+    config?: ConfettiConfiguration,
+    confettiFile?: ConfettiFile
 ) {
     debug(`Running hook: ${hook}`);
 
     function getCommands() {
         const environment =
-            repositoryOptions.runnerEnvironment || config?.runnerEnvironment; // we don't allow an runnerEnvironment in the confetti file because that wouldn't make sense. repo options take precedent over global
+            repositoryOptions.runnerEnvironment ||
+            config?.runnerEnvironment ||
+            'default'; // we don't allow an runnerEnvironment in the confetti file because that wouldn't make sense. repo options take precedent over global
         // order of precedence repositoryOptions --> confettiFile --> config
-        if (environment) {
-            if (
-                repositoryOptions.hooks &&
-                repositoryOptions.hooks[environment]
-            ) {
-                return repositoryOptions.hooks[environment][hook]; // even if the hook doesn't exist we still return. This means we don't combine environment hooks from multiple places. This is intentional.
-            }
-            if (
-                confettiFile &&
-                confettiFile.hooks &&
-                confettiFile.hooks[environment]
-            ) {
-                return confettiFile.hooks[environment][hook];
-            }
-            if (config?.hooks && config?.hooks[environment]) {
-                return config.hooks[environment][hook];
-            }
+        if (repositoryOptions.hooks?.[environment]) {
+            return repositoryOptions.hooks[environment][hook]; // even if the hook doesn't exist we still return. This means we don't combine environment hooks from multiple places. This is intentional.
         }
-        return (
-            (repositoryOptions.hooks && repositoryOptions.hooks[hook]) ||
-            (confettiFile && confettiFile.hooks && confettiFile.hooks[hook]) ||
-            (config?.hooks && config.hooks[hook])
-        );
+        if (confettiFile?.hooks?.[environment]) {
+            return confettiFile.hooks[environment][hook];
+        }
+        if (config?.hooks?.[environment]) {
+            return config.hooks[environment][hook];
+        }
+        return undefined;
     }
 
     const commands = getCommands();
@@ -47,7 +40,7 @@ export default async function runHook(
         return;
     }
     const execOptions = {
-        cwd: repositoryOptions.directory,
+        cwd,
         env: {
             PATH: process.env.PATH,
             ...config?.env,

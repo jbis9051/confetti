@@ -4,6 +4,7 @@ import http from 'http';
 import createApp from '../web/app';
 import getGlobalConfig from '../getGlobalConfig';
 import { DEFAULT_PORT } from '../constants';
+import { debug } from '../logger/logger';
 
 const config = getGlobalConfig();
 
@@ -13,4 +14,4 @@ app.set('port', port);
 const server = http.createServer(app);
 
 server.listen(port);
-server.addListener('listening', () => {});
+server.addListener('listening', () => debug('server started'));

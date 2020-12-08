@@ -2,12 +2,12 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import deploy from '../deploy/deploy';
 import isValidPayload from './isValidPayload';
-import { Config } from '../interfaces/Config';
+import { ConfettiConfiguration } from '../interfaces/ConfettiConfiguration';
 import getBranch from './getBranch';
 import { DEFAULT_BRANCH } from '../constants';
-import { debug, error, warn } from '../logger/logger';
+import { debug, error, success, warn } from '../logger/logger';
 
-export default function createApp(config: Config) {
+export default function createApp(config: ConfettiConfiguration) {
     const app = express();
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
@@ -80,7 +80,15 @@ export default function createApp(config: Config) {
             }
             res.status(202).end('Accepted'); // 202 just means it'll be batched for processing
             repositories.forEach((repository) => {
-                deploy(repositoryURL, repository[repositoryURL], config);
+                deploy(repositoryURL, repository[repositoryURL], config)
+                    .then(() =>
+                        success(`🎉 Deploying '${repositoryURL}' succeeded! 🎉`)
+                    )
+                    .catch((err) => {
+                        error(
+                            `Deploying '${repositoryURL}' failed with error: ${err.toString()}`
+                        );
+                    });
             });
         } catch (e) {
             error(e);

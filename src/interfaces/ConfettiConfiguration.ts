@@ -21,7 +21,7 @@ export interface RepositoryOptions extends SharedOptions {
     safeFiles?: string[];
 }
 
-export interface Config extends SharedOptions {
+export interface ConfettiConfiguration extends SharedOptions {
     port?: number;
     secret?: string;
     path?: string;

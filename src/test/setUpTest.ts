@@ -1,17 +1,16 @@
 import fse from 'fs-extra';
 import path from 'path';
+import yaml from 'js-yaml';
 import ExecRunner from '../deploy/ExecRunner';
-import { debug, unmute } from '../logger/logger';
+import { ConfettiFile } from '../interfaces/ConfettiFile';
+import { ConfettiConfiguration } from '../interfaces/ConfettiConfiguration';
 
-export default async function setUpTest(
+export default function setUpTest(
     tmpDir: string,
-    configurationFile: string,
-    confettiFile: string
+    configurationFile: ConfettiConfiguration,
+    confettiFile: ConfettiFile
 ) {
-    unmute();
-    debug('Config:', configurationFile);
-    debug('Confetti:', confettiFile);
-    await ExecRunner.setOpts({ cwd: tmpDir })
+    return ExecRunner.setOpts({ cwd: tmpDir })
         .run(`mkdir server`)
         .run(`mkdir client`)
         .run(`mkdir deployment`)
@@ -20,7 +19,7 @@ export default async function setUpTest(
         .run(() =>
             fse.writeFileSync(
                 path.join(tmpDir, 'client', '.confetti.yml'),
-                Buffer.from(confettiFile)
+                Buffer.from(yaml.safeDump(confettiFile))
             )
         )
         .setOpts({ cwd: path.join(tmpDir, 'client') })

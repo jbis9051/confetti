@@ -3,7 +3,10 @@ import path, { sep } from 'path';
 import yaml from 'js-yaml';
 import crypto from 'crypto';
 import { URL } from 'url';
-import { Config, RepositoryOptions } from '../interfaces/Config';
+import {
+    ConfettiConfiguration,
+    RepositoryOptions,
+} from '../interfaces/ConfettiConfiguration';
 import ExecRunner from './ExecRunner';
 import { ConfettiFile } from '../interfaces/ConfettiFile';
 import { CONFETTI_FILENAME, DEFAULT_BRANCH } from '../constants';
@@ -14,7 +17,7 @@ import { HooksUnion } from '../interfaces/Hooks';
 export default async function deploy(
     url: string,
     repositoryOptions: RepositoryOptions,
-    globalConfig?: Config
+    globalConfig?: ConfettiConfiguration
 ) {
     const tmpDir = await getTmpDir();
     const tmpMvDir = await getTmpDir();
@@ -37,16 +40,17 @@ export default async function deploy(
             } '${finalURL}' '${tmpDir}'`
         );
         const confettiFilePath = path.join(tmpDir, CONFETTI_FILENAME);
-        const confettiFile: ConfettiFile | false =
-            (await fse.pathExists(confettiFilePath)) &&
-            (yaml.safeLoad(
-                (await fse.readFile(confettiFilePath)).toString()
-            ) as ConfettiFile);
+        const confettiFile = (await fse.pathExists(confettiFilePath))
+            ? (yaml.safeLoad(
+                  (await fse.readFile(confettiFilePath)).toString()
+              ) as ConfettiFile)
+            : undefined;
 
-        const runHookClosure = (hook: HooksUnion) =>
-            runHook(hook, repositoryOptions, globalConfig, confettiFile);
+        const runHookClosure = (hook: HooksUnion, cwd: string) =>
+            runHook(hook, repositoryOptions, cwd, globalConfig, confettiFile);
 
-        await runHookClosure('prepare');
+        await runHookClosure('prepare', tmpDir);
+        await runHookClosure('build', tmpDir);
         const whitelist: [string, string][] = [];
         if (repositoryOptions.directory) {
             if (repositoryOptions.safeFiles) {
@@ -55,7 +59,8 @@ export default async function deploy(
                     repositoryOptions.safeFiles.map((filePath) => {
                         const absolutePath = filePath.startsWith(sep)
                             ? filePath
-                            : path.join(repositoryOptions.directory!, filePath);
+                            : // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                              path.join(repositoryOptions.directory!, filePath);
                         return fse.pathExists(absolutePath).then((exists) => {
                             if (exists) {
                                 const newPath = path.join(
@@ -80,6 +85,7 @@ export default async function deploy(
                     files.map((file) =>
                         fse.move(
                             path.join(tmpDir, file),
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                             path.join(repositoryOptions.directory!, file)
                         )
                     )
@@ -93,9 +99,8 @@ export default async function deploy(
                 )
             );
         }
-        await runHookClosure('build');
-        await runHookClosure('deploy');
-        await runHookClosure('cleanup');
+        await runHookClosure('deploy', repositoryOptions.directory || tmpDir);
+        await runHookClosure('cleanup', repositoryOptions.directory || tmpDir);
     } finally {
         await Promise.all([fse.remove(tmpDir), fse.remove(tmpMvDir)]);
     }

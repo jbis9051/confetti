@@ -3,13 +3,9 @@ import { LOG_PATH } from '../constants';
 
 // based on https://github.com/phenomnomnominal/betterer
 
-let muted = true;
-
 function log(...args: any[]) {
-    if (!muted) {
-        // eslint-disable-next-line no-console
-        console.log(...args);
-    }
+    // eslint-disable-next-line no-console
+    console.log(...args);
     const now = new Date();
     const string = args
         .map((arg) => arg.toString())
@@ -38,12 +34,6 @@ function createLogger(name: string) {
     };
 }
 
-export const mute = () => {
-    muted = true;
-};
-export const unmute = () => {
-    muted = false;
-};
 export const debug = createLogger('debg');
 export const success = createLogger('succ');
 export const info = createLogger('info');

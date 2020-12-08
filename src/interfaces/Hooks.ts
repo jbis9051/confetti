@@ -6,4 +6,4 @@ export const HooksArray = [
     'error',
 ] as const;
 export type HooksUnion = typeof HooksArray[number];
-export type HookRecord = Record<HooksUnion, string[]>;
+export type HookRecord = Partial<Record<HooksUnion, string[]>>;

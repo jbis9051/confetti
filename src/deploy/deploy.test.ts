@@ -1,35 +1,38 @@
 import fse from 'fs-extra';
 import path, { sep } from 'path';
 import os from 'os';
-import yaml from 'js-yaml';
 import { HooksArray } from '../interfaces/Hooks';
 import deploy from './deploy';
 import setUpTest from '../test/setUpTest';
-import { Config } from '../interfaces/Config';
+import { ConfettiConfiguration } from '../interfaces/ConfettiConfiguration';
+import { ConfettiFile } from '../interfaces/ConfettiFile';
 
 test('standard deployment', async () => {
     const tmpDir = fse.mkdtempSync(`${os.tmpdir()}${sep}`);
-
-    const CONFETTI_FILE = `
-hooks:
-${HooksArray.map(
-    (hook) => `  ${hook}:
-    - touch ${hook}`
-).join('\n')} 
-`;
-
-    const CONFETTI_CONF_FILE = `
-repositories:
-    - ${path.join(tmpDir, 'server')}:
-        directory: ${path.join(tmpDir, 'deployment')}
-        safeFiles:
-${HooksArray.map((hook) => `            - ${hook}`).join('\n')}
-`;
+    const CONFETTI_FILE: ConfettiFile = {
+        hooks: {
+            default: Object.fromEntries(
+                HooksArray.map((hook) => [hook, [`touch ${hook}`]])
+            ),
+        },
+    };
+    const CONFETTI_CONF_FILE: ConfettiConfiguration = {
+        repositories: [
+            {
+                [path.join(tmpDir, 'server')]: {
+                    directory: path.join(tmpDir, 'deployment'),
+                    safeFiles: HooksArray.slice(),
+                },
+            },
+        ],
+    };
     await setUpTest(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
-    const config = yaml.safeLoad(CONFETTI_CONF_FILE) as Config;
-
     const url = path.join(tmpDir, 'server');
-    await deploy(url, config.repositories[0][url], config);
+    await deploy(
+        url,
+        CONFETTI_CONF_FILE.repositories[0][url],
+        CONFETTI_CONF_FILE
+    );
     expect(
         [
             ...HooksArray.filter((hook) => hook !== 'error'),
@@ -40,88 +43,70 @@ ${HooksArray.map((hook) => `            - ${hook}`).join('\n')}
     await fse.removeSync(tmpDir);
 });
 
-test('environment confetti file deployment', async () => {
+test('environment setting in confetti file ', async () => {
     const tmpDir = fse.mkdtempSync(`${os.tmpdir()}${sep}`);
-
-    const CONFETTI_FILE = `
-hooks:
-    production:
-      build:
-       - touch testp
-    development:
-      build:
-        - touch testp
-`;
-
-    const CONFETTI_CONF_FILE = `
-repositories:
-    - ${path.join(tmpDir, 'server')}:
-        runnerEnvironment: production
-        directory: ${path.join(tmpDir, 'deployment')}
-`;
+    const CONFETTI_FILE: ConfettiFile = {
+        hooks: {
+            production: {
+                build: ['touch testp'],
+            },
+            development: {
+                build: ['touch testd'],
+            },
+        },
+    };
+    const CONFETTI_CONF_FILE: ConfettiConfiguration = {
+        repositories: [
+            {
+                [path.join(tmpDir, 'server')]: {
+                    directory: path.join(tmpDir, 'deployment'),
+                    runnerEnvironment: 'development',
+                },
+            },
+        ],
+    };
     await setUpTest(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
-    const config = yaml.safeLoad(CONFETTI_CONF_FILE) as Config;
     const url = path.join(tmpDir, 'server');
-    await deploy(url, config.repositories[0][url], config);
-    expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testp'))).toBe(true);
-    expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testd'))).toBe(
+    await deploy(
+        url,
+        CONFETTI_CONF_FILE.repositories[0][url],
+        CONFETTI_CONF_FILE
+    );
+    expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testd'))).toBe(true);
+    expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testp'))).toBe(
         false
     );
     await fse.removeSync(tmpDir);
 });
 
-test('environment repository options file deployment', async () => {
+test('environment setting in repository options', async () => {
     const tmpDir = fse.mkdtempSync(`${os.tmpdir()}${sep}`);
-
-    const CONFETTI_FILE = ``;
-
-    const CONFETTI_CONF_FILE = `
-repositories:
-    - ${path.join(tmpDir, 'server')}:
-        runnerEnvironment: production
-        directory: ${path.join(tmpDir, 'deployment')}
-        hooks:
-            production:
-              build:
-               - touch testp
-            development:
-              build:
-                - touch testp
-`;
+    const CONFETTI_FILE: ConfettiFile = {};
+    const CONFETTI_CONF_FILE: ConfettiConfiguration = {
+        repositories: [
+            {
+                [path.join(tmpDir, 'server')]: {
+                    directory: path.join(tmpDir, 'deployment'),
+                    runnerEnvironment: 'production',
+                    hooks: {
+                        production: {
+                            build: ['touch testp'],
+                        },
+                        development: {
+                            build: ['touch testd'],
+                        },
+                    },
+                },
+            },
+        ],
+    };
     await setUpTest(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
-    const config = yaml.safeLoad(CONFETTI_CONF_FILE) as Config;
     const url = path.join(tmpDir, 'server');
-    await deploy(url, config.repositories[0][url], config);
-    expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testp'))).toBe(true);
-    expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testd'))).toBe(
-        false
+    await deploy(
+        url,
+        CONFETTI_CONF_FILE.repositories[0][url],
+        CONFETTI_CONF_FILE
     );
-    await fse.removeSync(tmpDir);
-});
-
-test('environment config file deployment', async () => {
-    const tmpDir = fse.mkdtempSync(`${os.tmpdir()}${sep}`);
-
-    const CONFETTI_FILE = ``;
-
-    const CONFETTI_CONF_FILE = `
-repositories:
-    - ${path.join(tmpDir, 'server')}:
-        runnerEnvironment: production
-        directory: ${path.join(tmpDir, 'deployment')}
-hooks:
-    production:
-      build:
-       - touch testp
-    development:
-      build:
-        - touch testp
-`;
-    await setUpTest(tmpDir, CONFETTI_CONF_FILE, CONFETTI_FILE);
-
-    const url = path.join(tmpDir, 'server');
-    const config = yaml.safeLoad(CONFETTI_CONF_FILE) as Config;
-    await deploy(url, config.repositories[0][url], config);
     expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testp'))).toBe(true);
     expect(fse.existsSync(path.join(tmpDir, 'deployment', 'testd'))).toBe(
         false

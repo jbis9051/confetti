@@ -1,6 +1,6 @@
 import yaml from 'js-yaml';
 import fse from 'fs-extra';
-import { Config } from './interfaces/Config';
+import { ConfettiConfiguration } from './interfaces/ConfettiConfiguration';
 import { CONFETTI_CONFIG_PATH } from './constants';
 
 export default function getGlobalConfig() {
@@ -11,5 +11,5 @@ export default function getGlobalConfig() {
     }
     return yaml.safeLoad(
         fse.readFileSync(CONFETTI_CONFIG_PATH).toString()
-    ) as Config;
+    ) as ConfettiConfiguration;
 }

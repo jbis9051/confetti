@@ -73,6 +73,7 @@ export default class ExecRunner {
         const buffer = this.bag.slice().reverse();
         let previousResult: [string, string] | undefined;
         while (buffer.length > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const run = buffer.pop()!;
             if (typeof run[0] === 'function') {
                 // eslint-disable-next-line no-await-in-loop

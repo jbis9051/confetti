@@ -117,10 +117,6 @@ These options are defined at either the repository level or the global level.
 
 **Highly Recommended**: Webhook secret for security purposes. More information on [GitHub Developer Docs](https://docs.github.com/en/free-pro-team@latest/developers/webhooks-and-events/securing-your-webhooks).
 
-### `[hook: string]`: String[]
-
-See lifecycle steps for possible values of [hook]. Listed command are ran.
-
 ### `env`: Object
 
 Environment variables to be passed to run steps.
@@ -131,7 +127,7 @@ Environment variables to be passed to run steps.
 
 Branch to be used for deployment.
 
-### `runnerEnvironment`: String
+### `runnerEnvironment`: String - Default `default`
 
 Used to choose a runnerEnvironment. Usually either `production` or `development`. See confetti file options below.
 
@@ -148,10 +144,6 @@ These files will not be removed. Helpful for configuration files or `.env` files
 Directory where to deploy the repository to. If not specified, you can add manual deploy steps in the `deploy` hook.
 
 # Confetti File Options (`repo/.confetti.yml`)
-
-### `[hook: string]`: String[]
-
-See lifecycle steps for possible values of [hook]. Listed command are ran.
 
 ### `[environment: string]`: Object
 
