@@ -1,6 +1,6 @@
 import { exec, ExecOptions } from 'child_process';
 import { BaseEncodingOptions } from 'fs';
-import { debug } from '../logger/logger';
+import { debug, warn, error as errorLog } from '../logger/logger';
 
 type SingleRunOptions = (BaseEncodingOptions & ExecOptions) | undefined | null;
 
@@ -8,7 +8,7 @@ type RunnerArg =
     | string
     | ((
           // eslint-disable-next-line no-unused-vars
-          stdout?: string | Buffer
+          arg?: [string, string]
       ) =>
           | void
           | [string, SingleRunOptions]
@@ -22,19 +22,19 @@ export default class ExecRunner {
     static singleRun(
         command: string,
         options?: SingleRunOptions
-    ): Promise<string | Buffer | undefined> {
+    ): Promise<[string, string]> {
         return new Promise((resolve, reject) => {
             debug(`Running: ${command}`);
             exec(command, options, (error, stdout, stderr) => {
                 if (error) {
+                    errorLog(stderr.toString());
                     reject(error);
                     return;
                 }
                 if (stderr) {
-                    reject(stderr);
-                    return;
+                    warn(stderr.toString());
                 }
-                resolve(stdout);
+                resolve([stdout.toString(), stderr.toString()]);
             });
         });
     }
@@ -71,7 +71,7 @@ export default class ExecRunner {
 
     async execute() {
         const buffer = this.bag.slice().reverse();
-        let previousResult: undefined | string | Buffer;
+        let previousResult: [string, string] | undefined;
         while (buffer.length > 0) {
             const run = buffer.pop()!;
             if (typeof run[0] === 'function') {
