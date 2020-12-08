@@ -27,12 +27,12 @@ export default class ExecRunner {
             debug(`Running: ${command}`);
             exec(command, options, (error, stdout, stderr) => {
                 if (error) {
-                    errorLog(stderr.toString());
+                    errorLog(stderr.toString().trim());
                     reject(error);
                     return;
                 }
                 if (stderr) {
-                    warn(stderr.toString());
+                    warn(stderr.toString().trim());
                 }
                 resolve([stdout.toString(), stderr.toString()]);
             });
