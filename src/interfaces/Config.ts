@@ -14,18 +14,18 @@ interface SharedOptions {
     };
 }
 
-export type RepositoryOptions = {
+export interface RepositoryOptions extends SharedOptions {
     username?: string;
     password?: string;
     directory?: string;
     safeFiles?: string[];
-} & SharedOptions;
+}
 
-export type Config = {
+export interface Config extends SharedOptions {
     port?: number;
     secret?: string;
     path?: string;
     repositories: {
         [url: string]: RepositoryOptions;
     }[];
-} & SharedOptions;
+}
