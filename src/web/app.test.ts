@@ -15,7 +15,7 @@ function sleep(time: number) {
     return new Promise((resolve) => setTimeout(resolve, time));
 }
 
-test('standard payload', async () => {
+test('standard payload', async (done) => {
     const tmpDir = fse.mkdtempSync(`${os.tmpdir()}${sep}`);
     const CONFETTI_FILE: ConfettiFile = {
         hooks: { default: { build: ['touch test'] } },
@@ -61,6 +61,9 @@ test('standard payload', async () => {
             expect(
                 fse.existsSync(path.join(tmpDir, 'deployment', 'test'))
             ).toBe(true);
+            done();
+        } catch (e) {
+            done(e);
         } finally {
             server.close();
             await fse.removeSync(tmpDir);
@@ -68,7 +71,7 @@ test('standard payload', async () => {
     });
 });
 
-test('signed payload', async () => {
+test('signed payload', async (done) => {
     const tmpDir = fse.mkdtempSync(`${os.tmpdir()}${sep}`);
     const SECRET = crypto.randomBytes(64).toString('hex');
     const CONFETTI_FILE: ConfettiFile = {
@@ -122,6 +125,9 @@ test('signed payload', async () => {
             expect(
                 fse.existsSync(path.join(tmpDir, 'deployment', 'test'))
             ).toBe(true);
+            done();
+        } catch (e) {
+            done(e);
         } finally {
             server.close();
             await fse.removeSync(tmpDir);
@@ -129,7 +135,7 @@ test('signed payload', async () => {
     });
 });
 
-test('bad signature payload', async () => {
+test('bad signature payload', async (done) => {
     const tmpDir = fse.mkdtempSync(`${os.tmpdir()}${sep}`);
     const SECRET = crypto.randomBytes(64).toString('hex');
     const CONFETTI_FILE: ConfettiFile = {
@@ -141,6 +147,7 @@ test('bad signature payload', async () => {
             {
                 [path.join(tmpDir, 'server')]: {
                     directory: path.join(tmpDir, 'deployment'),
+                    secret: SECRET,
                 },
             },
         ],
@@ -178,6 +185,9 @@ test('bad signature payload', async () => {
             );
             debug(await resp.text());
             expect(resp.status).toBe(404);
+            done();
+        } catch (e) {
+            done(e);
         } finally {
             server.close();
             await fse.removeSync(tmpDir);

@@ -7,10 +7,8 @@ export default function isValidPayload(
 ) {
     // based off of https://gist.github.com/stigok/57d075c1cf2a609cb758898c0b202428
     const hmac = crypto.createHmac('sha256', secret);
-    const digest = Buffer.from(
-        `sha256=${hmac.update(JSON.stringify(payload)).digest('hex')}`,
-        'utf8'
-    );
+    const a = `sha256=${hmac.update(JSON.stringify(payload)).digest('hex')}`;
+    const digest = Buffer.from(a, 'utf8');
     const checksum = Buffer.from(signature);
     return (
         checksum.length === digest.length &&
