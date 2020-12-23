@@ -23,6 +23,7 @@ program
 
 program
     .command('deploy')
+    .description('Manually deploy. Helpful for testing.')
     .option(
         '-r, --repos <repositories...>',
         "Specific repositories to deploy. 'all' to deploy all. Default 'all'",
@@ -40,16 +41,18 @@ program
     });
 
 program
-    .command('start', 'Starts the web process')
+    .command('start')
+    .description('Starts worker process')
     .option('-c, --config <path>', 'Specify a config file path')
     .action((cmd) => workerControl('start', cmd.opts()));
 
 program
     .command('stop', 'Stops the web process')
+    .description('Stops worker process')
     .action((cmd) => workerControl('stop', cmd.opts()));
 
 program
-    .command('restart', 'Restarts the web process')
+    .command('restart', 'Restarts worker process')
     .option('-c, --config <path>', 'Specify a config file path')
     .action((cmd) => workerControl('restart', cmd.opts()));
 
