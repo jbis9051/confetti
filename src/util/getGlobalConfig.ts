@@ -1,7 +1,6 @@
-import yaml from 'js-yaml';
 import fse from 'fs-extra';
-import { ConfettiConfiguration } from './interfaces/ConfettiConfiguration';
 import { CONFETTI_CONFIG_PATH } from './constants';
+import loadConfigurationFile from './loadConfigurationFile';
 
 export default function getGlobalConfig() {
     if (!fse.existsSync(CONFETTI_CONFIG_PATH)) {
@@ -9,7 +8,5 @@ export default function getGlobalConfig() {
             `Config not found at '${CONFETTI_CONFIG_PATH}'. Run 'sudo confetti init'`
         );
     }
-    return yaml.safeLoad(
-        fse.readFileSync(CONFETTI_CONFIG_PATH).toString()
-    ) as ConfettiConfiguration;
+    return loadConfigurationFile(CONFETTI_CONFIG_PATH);
 }

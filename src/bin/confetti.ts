@@ -1,13 +1,56 @@
 #!/usr/bin/env node
 
-import argDeploy from './argDeploy';
+import { program } from 'commander';
+import fs from 'fs';
+import deploy from '../cli/commands/deploy';
+import loadConfigurationFile from '../util/loadConfigurationFile';
+import getGlobalConfig from '../util/getGlobalConfig';
+import workerControl from '../cli/commands/workerControl';
+import { CONFETTI_CONFIG_PATH } from '../util/constants';
 
-const args = process.argv.splice(2);
+program
+    .command('init', 'Initialize a confetti config file')
+    .option('-c, --config <path>', 'Specify a config file path')
+    .action((cmd) => {
+        const options = cmd.opts();
+        const configPath = options.config || CONFETTI_CONFIG_PATH;
+        fs.writeFileSync(
+            configPath,
+            `repositories:
+    `
+        );
+    });
 
-switch (args[0]) {
-    case 'deploy':
-        argDeploy();
-        break;
-    default:
-        throw new Error('Argument Required');
-}
+program
+    .command('deploy')
+    .option(
+        '-r, --repos <repositories...>',
+        "Specific repositories to deploy. 'all' to deploy all. Default 'all'",
+        'all'
+    )
+    .option('-c, --config <path>', 'Specify a config file path')
+    .action((cmd) => {
+        const options = cmd.opts();
+        deploy(
+            options.repos,
+            options.config
+                ? loadConfigurationFile(options.config)
+                : getGlobalConfig()
+        );
+    });
+
+program
+    .command('start', 'Starts the web process')
+    .option('-c, --config <path>', 'Specify a config file path')
+    .action((cmd) => workerControl('start', cmd.opts()));
+
+program
+    .command('stop', 'Stops the web process')
+    .action((cmd) => workerControl('stop', cmd.opts()));
+
+program
+    .command('restart', 'Restarts the web process')
+    .option('-c, --config <path>', 'Specify a config file path')
+    .action((cmd) => workerControl('restart', cmd.opts()));
+
+program.parse(process.argv);

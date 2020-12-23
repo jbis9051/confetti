@@ -7,7 +7,6 @@ type SingleRunOptions = (BaseEncodingOptions & ExecOptions) | undefined | null;
 type RunnerArg =
     | string
     | ((
-          // eslint-disable-next-line no-unused-vars
           arg?: [string, string]
       ) =>
           | void

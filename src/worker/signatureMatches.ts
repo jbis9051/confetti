@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 
-export default function isValidPayload(
+export default function signatureMatches(
     payload: any,
     secret: string,
     signature: string

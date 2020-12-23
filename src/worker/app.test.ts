@@ -8,7 +8,7 @@ import setUpTest from '../test/setUpTest';
 import getApp from './app';
 import { debug } from '../logger/logger';
 import { ConfettiConfiguration } from '../interfaces/ConfettiConfiguration';
-import { DEFAULT_BRANCH, DEFAULT_PORT } from '../constants';
+import { DEFAULT_BRANCH, DEFAULT_PORT } from '../util/constants';
 import { ConfettiFile } from '../interfaces/ConfettiFile';
 
 function sleep(time: number) {

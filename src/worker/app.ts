@@ -1,10 +1,10 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import deploy from '../deploy/deploy';
-import isValidPayload from './isValidPayload';
+import signatureMatches from './signatureMatches';
 import { ConfettiConfiguration } from '../interfaces/ConfettiConfiguration';
 import getBranch from './getBranch';
-import { DEFAULT_BRANCH } from '../constants';
+import { DEFAULT_BRANCH } from '../util/constants';
 import { debug, error, success, warn } from '../logger/logger';
 
 export default function createApp(config: ConfettiConfiguration) {
@@ -64,7 +64,7 @@ export default function createApp(config: ConfettiConfiguration) {
                     );
                     return false;
                 }
-                if (!isValidPayload(req.body, secret, signature)) {
+                if (!signatureMatches(req.body, secret, signature)) {
                     error(
                         `Match for repository [${repositoryURL}] failed match with: Signature did not match`
                     );

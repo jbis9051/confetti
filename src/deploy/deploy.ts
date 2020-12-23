@@ -9,9 +9,9 @@ import {
 } from '../interfaces/ConfettiConfiguration';
 import ExecRunner from './ExecRunner';
 import { ConfettiFile } from '../interfaces/ConfettiFile';
-import { CONFETTI_FILENAME, DEFAULT_BRANCH } from '../constants';
+import { CONFETTI_FILENAME, DEFAULT_BRANCH } from '../util/constants';
 import runHook from './runHook';
-import getTmpDir from './getTmpDir';
+import createTmpDir from './createTmpDir';
 import { HooksUnion } from '../interfaces/Hooks';
 
 export default async function deploy(
@@ -19,8 +19,8 @@ export default async function deploy(
     repositoryOptions: RepositoryOptions,
     globalConfig?: ConfettiConfiguration
 ) {
-    const tmpDir = await getTmpDir();
-    const tmpMvDir = await getTmpDir();
+    const tmpDir = await createTmpDir();
+    const tmpMvDir = await createTmpDir();
     await fse.ensureDir(tmpDir);
     let finalURL = url;
     if (/^https?:\/\//.test(url)) {

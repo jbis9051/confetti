@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import { LOG_PATH } from '../constants';
+import fs from 'fs';
+import { LOG_PATH } from '../util/constants';
 
 // based on https://github.com/phenomnomnominal/betterer
 
@@ -13,7 +13,9 @@ function log(...args: any[]) {
         .split('\n')
         .map((line: string) => `${now.toUTCString()} ${line}`)
         .join('\n');
-    fs.appendFileSync(LOG_PATH, `${string}\n`);
+    if (process.env.CONFETTI_P_TYPE === 'master') {
+        fs.appendFileSync(LOG_PATH, `${string}\n`);
+    }
 }
 
 function createLogger(name: string) {

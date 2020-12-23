@@ -1,0 +1,26 @@
+#!/usr/bin/env node
+
+import http from 'http';
+import fs from 'fs';
+import createApp from '../worker/app';
+import getGlobalConfig from '../util/getGlobalConfig';
+import { CONFETTI_PID_PATH, DEFAULT_PORT } from '../util/constants';
+import { debug } from '../logger/logger';
+import loadConfigurationFile from '../util/loadConfigurationFile';
+
+const config = process.env.CONFETTI_CONFIG_PATH ? loadConfigurationFile(process.env.CONFETTI_CONFIG_PATH) : getGlobalConfig();
+
+fs.writeFileSync(CONFETTI_PID_PATH, process.pid.toString(10))
+
+process.on("exit", () => {
+    fs.unlinkSync(CONFETTI_PID_PATH);
+    process.exit();
+});
+
+const port = config.port || DEFAULT_PORT;
+const app = createApp(config);
+app.set('port', port);
+const server = http.createServer(app);
+
+server.listen(port);
+server.addListener('listening', () => debug('server started'));
