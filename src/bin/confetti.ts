@@ -9,7 +9,8 @@ import workerControl from '../cli/commands/workerControl';
 import { CONFETTI_CONFIG_PATH } from '../util/constants';
 
 program
-    .command('init', 'Initialize a confetti config file')
+    .command('init')
+    .description('Initialize a confetti config file')
     .option('-c, --config <path>', 'Specify a config file path')
     .action((cmd) => {
         const options = cmd.opts();
