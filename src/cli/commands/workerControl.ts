@@ -9,7 +9,10 @@ export default async function workerControl(command: string, options?: any) {
             spawn(path.join(__dirname, '..', 'worker'), {
                 detached: true,
                 windowsHide: true,
-                env: {},
+                env: {
+                    PATH: process.env.PATH,
+                    CONFETTI_CONFIG_PATH: options?.config,
+                },
             });
             break;
         case 'stop':
