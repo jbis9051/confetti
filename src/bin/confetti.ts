@@ -7,6 +7,7 @@ import loadConfigurationFile from '../util/loadConfigurationFile';
 import getGlobalConfig from '../util/getGlobalConfig';
 import workerControl from '../cli/commands/workerControl';
 import { CONFETTI_CONFIG_PATH } from '../util/constants';
+import { success, warn } from '../logger/logger';
 
 program
     .command('init')
@@ -15,11 +16,16 @@ program
     .action((cmd) => {
         const options = cmd.opts();
         const configPath = options.config || CONFETTI_CONFIG_PATH;
-        fs.writeFileSync(
-            configPath,
-            `repositories:
+        if (fs.existsSync(configPath)) {
+            warn(`Configuration file already exists at path '${configPath}'`);
+        } else {
+            fs.writeFileSync(
+                configPath,
+                `repositories:
     `
-        );
+            );
+            success(`Created configuration file at '${configPath}'`);
+        }
     });
 
 program
@@ -41,18 +47,20 @@ program
         );
     });
 
-program
+const worker = program.command('worker');
+worker
     .command('start')
     .description('Starts worker process')
     .option('-c, --config <path>', 'Specify a config file path')
     .action((cmd) => workerControl('start', cmd.opts()));
 
-program
+worker
     .command('stop')
     .description('Stops worker process')
+    .option('-c, --config <path>', 'Specify a config file path')
     .action((cmd) => workerControl('stop', cmd.opts()));
 
-program
+worker
     .command('restart')
     .description('Restarts worker process')
     .option('-c, --config <path>', 'Specify a config file path')
