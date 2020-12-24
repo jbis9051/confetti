@@ -17,7 +17,10 @@ export default async function deploy(
     const deploymentListing = repositoriesObjs
         .map((repoObj) => {
             const url = Object.keys(repoObj)[0];
-            return `${url} --> ${repoObj[url].directory}`;
+            if (repoObj.directory) {
+                return `${url} --> ${repoObj.directory}`;
+            }
+            return url;
         })
         .join('\n');
     info(`Planning to deploy the following:
@@ -35,7 +38,7 @@ export default async function deploy(
         config.repositories.map((repoObj) => {
             const url = Object.keys(repoObj)[0];
             info(`Deploying '${url}'`);
-            return deployFunction(url, repoObj[url], config)
+            return deployFunction(url, repoObj, config)
                 .then(() => {
                     succeeded += 1;
                     success(`🎉 Deploying '${url}' succeeded! 🎉`);

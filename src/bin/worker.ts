@@ -22,6 +22,7 @@ function onExit() {
     if (fs.existsSync(CONFETTI_PID_PATH)) {
         fs.unlinkSync(CONFETTI_PID_PATH);
     }
+    debug('exiting');
     process.exit();
 }
 

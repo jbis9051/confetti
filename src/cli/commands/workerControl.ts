@@ -2,7 +2,11 @@ import { spawn } from 'child_process';
 import path from 'path';
 import * as fs from 'fs';
 import fse from 'fs-extra';
-import { CONFETTI_CONFIG_PATH, CONFETTI_PID_PATH } from '../../util/constants';
+import {
+    CONFETTI_CONFIG_PATH,
+    CONFETTI_PID_PATH,
+    LOG_PATH,
+} from '../../util/constants';
 import { error, success, warn } from '../../logger/logger';
 
 export default async function workerControl(command: string, options?: any) {
@@ -18,19 +22,21 @@ export default async function workerControl(command: string, options?: any) {
                 error('Worker already running');
                 return;
             }
+            const fd = fse.openSync(LOG_PATH, 'a');
             const worker = spawn(
                 process.execPath,
                 [path.join(__dirname, '..', '..', 'bin', 'worker.js')],
                 {
                     detached: true,
                     windowsHide: true,
-                    stdio: 'ignore',
+                    stdio: ['ignore', fd, fd],
                     env: {
                         PATH: process.env.PATH,
                         CONFETTI_CONFIG_PATH: options?.config,
                     },
                 }
             );
+            fs.closeSync(fd);
             worker.unref();
             success(`Started worker with pid ${worker.pid}`);
             break;
